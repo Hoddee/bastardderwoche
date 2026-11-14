@@ -1,0 +1,313 @@
+<title>Bastard der Woche</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: eine dunkle, einspaltige Mobile-App — Header mit Countdown, Podium der letzten Runde, Live-Voting-Liste */
+:root{
+  --bg:#0b0b0e;
+  --surface:#141419;
+  --surface-2:#1c1c23;
+  --line:#26262f;
+  --fg:#f2f0ed;
+  --muted:#8e8c96;
+  --accent:#ff4d5e;
+  --accent-soft:rgba(255,77,94,.14);
+  --gold:#e8b54a;
+  --silver:#b8bcc8;
+  --bronze:#c98a5b;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 48px;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:none;
+}
+.wrap{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{padding-block:28px 0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{
+  font-family:'Space Grotesk','Inter',sans-serif;
+  font-size:clamp(34px,9vw,44px);
+  line-height:1.02;
+  margin:6px 0 0;
+  letter-spacing:-.02em;
+  text-wrap:balance;
+}
+.countdown{
+  margin-top:14px;display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}.bar i{transition:none}.row{transition:none}}
+.countdown b{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:17px;letter-spacing:.02em}
+.countdown span{font-size:13px;color:var(--muted)}
+section h2{
+  font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;
+}
+.podium{display:flex;flex-direction:column;gap:8px}
+.pod{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
+}
+.pod .medal{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;
+  width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  color:#0b0b0e;flex:none;
+}
+.pod.p1 .medal{background:var(--gold)}
+.pod.p2 .medal{background:var(--silver)}
+.pod.p3 .medal{background:var(--bronze)}
+.pod.p1{border-color:rgba(232,181,74,.45)}
+.pod .pname{font-weight:600;font-size:16px;flex:1;min-width:0}
+.pod .pvotes{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:14px;font-size:14px;color:var(--muted);line-height:1.5;
+}
+.note b{color:var(--fg)}
+#status{display:none}
+#status.show{display:block}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{
+  position:relative;display:flex;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:14px;width:100%;text-align:left;color:var(--fg);
+  font:inherit;cursor:pointer;overflow:hidden;
+  transition:border-color .15s ease,transform .08s ease;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.row:active{transform:scale(.985)}
+.row[disabled]{cursor:default}
+.row[disabled]:active{transform:none}
+.row.mine{border-color:var(--accent)}
+.bar{position:absolute;inset:0;pointer-events:none}
+.bar i{
+  position:absolute;inset:0 auto 0 0;width:0;
+  background:var(--accent-soft);
+  transition:width .5s cubic-bezier(.22,1,.36,1);
+}
+.row .name{position:relative;font-weight:600;font-size:16px;flex:1;min-width:0}
+.row .count{
+  position:relative;font-family:'Space Grotesk',sans-serif;font-weight:700;
+  font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;
+}
+.row .tag{
+  position:relative;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:4px 9px;flex:none;
+}
+.meta{font-size:13px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;padding-block:8px 0}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Das offizielle Ranking</div>
+    <h1>Bastard<br>der Woche</h1>
+    <div class="countdown" id="cd">
+      <span class="dot" id="cdDot"></span>
+      <div><b id="cdTime">–</b><br><span id="cdLabel">Abstimmung läuft</span></div>
+    </div>
+  </header>
+
+  <section id="lastRound" hidden>
+    <h2 id="lastTitle">Letzte Runde</h2>
+    <div class="podium" id="podium"></div>
+  </section>
+
+  <section>
+    <h2>Wen trifft's diese Woche?</h2>
+    <div class="note" id="status"></div>
+    <div class="list" id="list"></div>
+    <p class="meta" id="totals"></p>
+  </section>
+
+  <footer>Eine Stimme pro Person &amp; Woche. Auswertung sonntags um 18:00 Uhr.<br>Alles aus Liebe. ❤️</footer>
+</div>
+
+<script>
+const NAMES = ["Hodde","Dani","Benni Döz","Mikk","Benni Schwer","Bene","Ben","Philipp","Ange","Noah","Alex","Jakob","MotzgiMattis","Levin","Silas","Felix","Vince","Matti"];
+const TZ = "Europe/Berlin";
+
+/* ---- Zeitlogik: Runde endet Sonntag 18:00 (Berlin) ---- */
+const fmt = new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,weekday:"short"});
+function partsAt(epoch){
+  const p = {};
+  for (const x of fmt.formatToParts(new Date(epoch))) p[x.type] = x.value;
+  return {y:+p.year, mo:+p.month, d:+p.day, h:+(p.hour==="24"?0:p.hour), mi:+p.minute, s:+p.second, wd:p.weekday};
+}
+function epochForBerlin(y,mo,d,h){
+  let t = Date.UTC(y,mo-1,d,h);
+  for (let i=0;i<3;i++){
+    const p = partsAt(t);
+    t += Date.UTC(y,mo-1,d,h) - Date.UTC(p.y,p.mo-1,p.d,p.h,p.mi,p.s);
+  }
+  return t;
+}
+function currentDeadline(now){
+  for (let off=0; off<8; off++){
+    const p = partsAt(now + off*864e5);
+    if (p.wd === "Sun"){
+      const dl = epochForBerlin(p.y,p.mo,p.d,18);
+      if (dl > now) return dl;
+    }
+  }
+  return currentDeadline(now + 864e5);
+}
+function weekIdOf(deadline){
+  const p = partsAt(deadline - 36e5);
+  return `${p.y}-${String(p.mo).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
+}
+let deadline = currentDeadline(Date.now());
+let weekId = weekIdOf(deadline);
+let prevWeekId = weekIdOf(deadline - 7*864e5);
+
+/* ---- UI-Grundgerüst ---- */
+const listEl = document.getElementById("list");
+const rows = {};
+for (const name of NAMES){
+  const b = document.createElement("button");
+  b.className = "row"; b.disabled = true; b.id = "row-" + NAMES.indexOf(name);
+  b.innerHTML = `<span class="bar"><i></i></span><span class="name"></span><span class="tag" hidden>Dein Vote</span><span class="count">0</span>`;
+  b.querySelector(".name").textContent = name;
+  b.addEventListener("click", ()=>vote(name));
+  listEl.appendChild(b);
+  rows[name] = b;
+}
+const statusEl = document.getElementById("status");
+function setStatus(html){ statusEl.innerHTML = html; statusEl.classList.add("show"); }
+function clearStatus(){ statusEl.classList.remove("show"); }
+setStatus("Lade Stimmen&nbsp;…");
+
+/* ---- Countdown ---- */
+const cdTime = document.getElementById("cdTime"), cdLabel = document.getElementById("cdLabel");
+function tick(){
+  const now = Date.now();
+  if (now >= deadline){
+    deadline = currentDeadline(now);
+    weekId = weekIdOf(deadline);
+    prevWeekId = weekIdOf(deadline - 7*864e5);
+    render();
+  }
+  const ms = deadline - now;
+  const d = Math.floor(ms/864e5), h = Math.floor(ms%864e5/36e5), m = Math.floor(ms%36e5/6e4), s = Math.floor(ms%6e4/1e3);
+  cdTime.textContent = d > 0
+    ? `${d} Tag${d===1?"":"e"} ${h} Std ${String(m).padStart(2,"0")} Min`
+    : `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  cdLabel.textContent = "bis zur Auswertung · So 18:00 Uhr";
+}
+tick(); setInterval(tick, 1000);
+
+/* ---- Daten ---- */
+let db = null, myId = null, voteDocs = {}, canVote = false, writing = false;
+
+function countsFor(wk){
+  const c = {}; let total = 0;
+  for (const name of NAMES) c[name] = 0;
+  for (const id in voteDocs){
+    const v = (voteDocs[id].weeks || {})[wk];
+    if (v && c[v.name] !== undefined){ c[v.name]++; total++; }
+  }
+  return {c, total};
+}
+function myVote(){
+  if (!myId || !voteDocs[myId]) return null;
+  return (voteDocs[myId].weeks || {})[weekId] || null;
+}
+function render(){
+  const {c, total} = countsFor(weekId);
+  const max = Math.max(1, ...Object.values(c));
+  const mine = myVote();
+  for (const name of NAMES){
+    const r = rows[name];
+    r.querySelector(".count").textContent = c[name];
+    r.querySelector(".bar i").style.width = total ? (c[name]/max*100) + "%" : "0";
+    r.classList.toggle("mine", !!mine && mine.name === name);
+    r.querySelector(".tag").hidden = !(mine && mine.name === name);
+    r.disabled = !canVote || writing;
+  }
+  document.getElementById("totals").textContent =
+    total === 1 ? "1 Stimme abgegeben" : total + " Stimmen abgegeben";
+  renderPodium();
+}
+function renderPodium(){
+  const {c, total} = countsFor(prevWeekId);
+  const sec = document.getElementById("lastRound");
+  if (!total){ sec.hidden = true; return; }
+  const top = NAMES.map(n=>({n, v:c[n]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);
+  const pod = document.getElementById("podium");
+  pod.innerHTML = "";
+  const labels = ["p1","p2","p3"];
+  top.forEach((x,i)=>{
+    const div = document.createElement("div");
+    div.className = "pod " + labels[i];
+    div.innerHTML = `<span class="medal">${i+1}</span><span class="pname"></span><span class="pvotes"></span>`;
+    div.querySelector(".pname").textContent = i === 0 ? x.n + " 👑" : x.n;
+    div.querySelector(".pvotes").textContent = x.v === 1 ? "1 Stimme" : x.v + " Stimmen";
+    pod.appendChild(div);
+  });
+  const d = prevWeekId.split("-");
+  document.getElementById("lastTitle").textContent = `Letzte Runde · ${d[2]}.${d[1]}.`;
+  sec.hidden = false;
+}
+
+async function vote(name){
+  if (!canVote || writing || !db || !myId) return;
+  const cur = myVote();
+  if (cur && cur.name === name) return;
+  writing = true; render();
+  try{
+    const body = JSON.parse(JSON.stringify(voteDocs[myId] || {weeks:{}}));
+    body.weeks = body.weeks || {};
+    body.weeks[weekId] = {name, ts: Date.now()};
+    await db.collection("votes").doc(myId).set(body);
+    clearStatus();
+  }catch(e){
+    if (e && e.code === "invalid_argument"){
+      canVote = false;
+      setStatus("Du kannst hier leider nicht abstimmen — frag den Link-Besitzer, ob der Link auf <b>„Kann interagieren“</b> steht.");
+    } else {
+      setStatus("Speichern hat nicht geklappt. Versuch's gleich nochmal.");
+    }
+  }
+  writing = false; render();
+}
+
+(async ()=>{
+  const [dbNs, userNs] = await Promise.all([claude.use("db"), claude.use("user")]);
+  db = dbNs;
+  if (!db){
+    setStatus("Zum Mitvoten musst du <b>bei Claude angemeldet</b> sein (kostenloser Account reicht). Dann diese Seite neu öffnen.");
+    render();
+    return;
+  }
+  if (userNs){ try{ myId = await userNs.id(); }catch(_){} }
+  canVote = !!myId;
+  if (!canVote) setStatus("Zum Mitvoten musst du angemeldet sein.");
+
+  let timer = setTimeout(()=>{ setStatus("Stimmen laden gerade nicht — Verbindung prüfen."); }, 10000);
+  db.collection("votes").onSnapshot(snap=>{
+    if (timer && !snap.metadata.fromCache){ clearTimeout(timer); timer = null; }
+    voteDocs = {};
+    for (const d of snap.docs) voteDocs[d.id] = d.data() || {};
+    if (!timer){
+      const mine = myVote();
+      if (canVote && !mine) setStatus("Noch nicht abgestimmt. <b>Tipp auf einen Namen</b> — du kannst bis Sonntag 18:00 Uhr noch umentscheiden.");
+      else if (canVote) clearStatus();
+    }
+    render();
+  }, err=>{
+    if (timer){ clearTimeout(timer); timer = null; }
+    setStatus("Stimmen können gerade nicht geladen werden.");
+  });
+})();
+</script>
