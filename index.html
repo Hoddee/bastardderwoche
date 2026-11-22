@@ -225,7 +225,7 @@ const POINTS = [3,2,1];
 const TZ = "Europe/Berlin";
 const DEFAULT_HOUR = 18;
 /* Ausnahmen: Runde (Sonntag-Datum) -> Endstunde ab Sonntag 0:00 gezählt. 24 = Mitternacht, 34 = Montag 10:00 */
-const HOUR_OVERRIDE = {"2026-11-22": 34};
+const HOUR_OVERRIDE = {"2026-11-22": 24};
 const CFG = (typeof BDW_CONFIG !== "undefined" && BDW_CONFIG) || {};
 const API = CFG.url ? CFG.url.replace(/\/$/,"") + "/rest/v1/bdw_votes" : null;
 
