@@ -274,7 +274,9 @@ function currentDeadline(now){
   }
   return currentDeadline(now + 864e5);
 }
-function weekIdOf(deadline){ return ymd(partsAt(deadline - 12*36e5)); }
+/* Zurückgesetzte Runden: alte Stimmen bleiben gespeichert, zählen aber nicht mehr */
+const ROUND_RESET = {"2026-11-22": "2026-11-22-r2"};
+function weekIdOf(deadline){ const id = ymd(partsAt(deadline - 12*36e5)); return ROUND_RESET[id] || id; }
 let deadline, weekId, prevWeekId;
 function setRound(now){
   deadline = currentDeadline(now);
@@ -523,7 +525,7 @@ function renderChampion(){
   const top = ranking.slice(0,3);
   document.getElementById("champName").textContent = top[0].n;
   document.getElementById("champVotes").textContent =
-    pkt(top[0].pts) + " · gekürt am " + prevWeekId.split("-").reverse().slice(0,2).join(".") + ".";
+    pkt(top[0].pts) + " · gekürt am " + prevWeekId.slice(0,10).split("-").reverse().slice(0,2).join(".") + ".";
   champSec.hidden = false;
   const pod = document.getElementById("podium");
   pod.innerHTML = "";
