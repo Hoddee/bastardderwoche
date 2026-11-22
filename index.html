@@ -275,7 +275,7 @@ function currentDeadline(now){
   return currentDeadline(now + 864e5);
 }
 /* Zurückgesetzte Runden: alte Stimmen bleiben gespeichert, zählen aber nicht mehr */
-const ROUND_RESET = {"2026-11-22": "2026-11-22-r2"};
+const ROUND_RESET = {"2026-11-15": "2026-11-15-ungueltig", "2026-11-22": "2026-11-22-r2"};
 function weekIdOf(deadline){ const id = ymd(partsAt(deadline - 12*36e5)); return ROUND_RESET[id] || id; }
 let deadline, weekId, prevWeekId;
 function setRound(now){
