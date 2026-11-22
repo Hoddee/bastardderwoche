@@ -6,7 +6,7 @@
 <title>Bastard der Woche</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: dunkle, einspaltige Mobile-App — Header mit Countdown, amtierender Bastard, Podium, Voting-Liste, Sticky-Vote-Button */
+/* Layout: dunkle, einspaltige Mobile-App — Countdown, amtierender Bastard, Podium, eigener Top-3-Zettel, Namensliste, Stimmzettel aller */
 :root{
   --bg:#0b0b0e;
   --surface:#141419;
@@ -43,13 +43,11 @@ h1{
   font-size:clamp(34px,9vw,44px);
   line-height:1.02;margin:6px 0 0;letter-spacing:-.02em;text-wrap:balance;
 }
-.countdown{
-  margin-top:14px;display:flex;align-items:center;gap:10px;
-  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
-}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.countdown{margin-top:14px;display:flex;align-items:center;gap:10px;padding:12px 14px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-@media (prefers-reduced-motion:reduce){.dot{animation:none}.bar i{transition:none}.row{transition:none}.cta{transition:none}}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}.bar i{transition:none}.row,.cta,.ctabar,.slot{transition:none}}
 .countdown b{font-family:'Space Grotesk',sans-serif;font-variant-numeric:tabular-nums;font-size:17px;letter-spacing:.02em}
 .countdown span{font-size:13px;color:var(--muted)}
 .champ{
@@ -66,27 +64,46 @@ section h2{
   letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;
 }
 .podium{display:flex;flex-direction:column;gap:8px}
-.pod{
-  display:flex;align-items:center;gap:12px;
-  background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;
-}
-.pod .medal{
+.pod{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.medal{
   font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;
   width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
   color:#0b0b0e;flex:none;
 }
-.pod.p1 .medal{background:var(--gold)}
-.pod.p2 .medal{background:var(--silver)}
-.pod.p3 .medal{background:var(--bronze)}
+.m1{background:var(--gold)} .m2{background:var(--silver)} .m3{background:var(--bronze)}
 .pod .pname{font-weight:600;font-size:16px;flex:1;min-width:0}
 .pod .pvotes{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.note{
-  background:var(--surface);border:1px solid var(--line);border-radius:14px;
-  padding:14px;font-size:14px;color:var(--muted);line-height:1.5;
-}
+.note{padding:14px;font-size:14px;color:var(--muted);line-height:1.5}
 .note b{color:var(--fg)}
-#status{display:none}
+#status{display:none;margin-bottom:10px}
 #status.show{display:block}
+
+/* Stimmzettel */
+.ballot{padding:14px;display:flex;flex-direction:column;gap:12px}
+.field label{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+select{
+  width:100%;font:inherit;font-size:16px;font-weight:600;color:var(--fg);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  appearance:none;-webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 20px) 50%,calc(100% - 14px) 50%;background-size:6px 6px;background-repeat:no-repeat;
+}
+select:focus-visible,.row:focus-visible,.slot:focus-visible,.cta:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.slots{display:flex;flex-direction:column;gap:6px}
+.slot{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface-2);border:1px dashed var(--line);border-radius:12px;padding:8px 10px;
+  font:inherit;color:var(--muted);cursor:pointer;transition:border-color .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.slot .medal{width:28px;height:28px;font-size:13px;border-radius:8px}
+.slot.filled{border-style:solid;color:var(--fg)}
+.slot .sname{flex:1;min-width:0;font-weight:600;font-size:15px}
+.slot .x{font-size:12px;color:var(--muted)}
+.slot.next{border-color:var(--accent)}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* Namensliste */
 .list{display:flex;flex-direction:column;gap:8px}
 .row{
   position:relative;display:flex;align-items:center;gap:12px;
@@ -100,23 +117,28 @@ section h2{
 .row[disabled]{cursor:default;opacity:.7}
 .row[disabled]:active{transform:none}
 .row.sel{border-color:var(--accent);background:var(--surface-2)}
-.row.mine .name::after{content:" ✓";color:var(--accent)}
 .bar{position:absolute;inset:0;pointer-events:none}
-.bar i{
-  position:absolute;inset:0 auto 0 0;width:0;
-  background:var(--accent-soft);
-  transition:width .5s cubic-bezier(.22,1,.36,1);
+.bar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent-soft);transition:width .5s cubic-bezier(.22,1,.36,1)}
+.row .place{
+  position:relative;width:24px;height:24px;border-radius:7px;flex:none;
+  border:2px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#0b0b0e;
 }
-.row .pick{
-  position:relative;width:20px;height:20px;border-radius:50%;flex:none;
-  border:2px solid var(--line);transition:border-color .15s ease,background .15s ease;
-}
-.row.sel .pick{border-color:var(--accent);background:var(--accent)}
+.row .place.m1,.row .place.m2,.row .place.m3{border-color:transparent}
 .row .name{position:relative;font-weight:600;font-size:16px;flex:1;min-width:0}
 .row .count{
   position:relative;font-family:'Space Grotesk',sans-serif;font-weight:700;
-  font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;
+  font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;
 }
+
+/* Stimmzettel aller */
+.ballots{display:flex;flex-direction:column;gap:8px}
+.bl{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.bl .who{font-weight:700;font-size:15px}
+.bl .who.you::after{content:" · du";color:var(--accent);font-weight:600;font-size:13px}
+.bl .picks{font-size:13px;color:var(--muted);line-height:1.5}
+.bl .picks b{color:var(--fg);font-weight:600}
+
 .meta{font-size:13px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
 footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;padding-top:8px}
 .ctabar{
@@ -144,9 +166,9 @@ footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;paddi
   <header>
     <div class="eyebrow">Das offizielle Ranking</div>
     <h1>Bastard<br>der Woche</h1>
-    <div class="countdown">
+    <div class="countdown card">
       <span class="dot"></span>
-      <div><b id="cdTime">–</b><br><span>bis zur Auswertung · So 18:00 Uhr</span></div>
+      <div><b id="cdTime">–</b><br><span id="cdLabel">bis zur Auswertung</span></div>
     </div>
   </header>
 
@@ -167,13 +189,30 @@ footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;paddi
   </section>
 
   <section>
-    <h2>Wen trifft's diese Woche?</h2>
-    <div class="note" id="status"></div>
+    <h2>Deine Top 3 der Woche</h2>
+    <div class="note card" id="status"></div>
+    <div class="ballot card">
+      <div class="field">
+        <label for="voter">Wer bist du?</label>
+        <select id="voter"><option value="">Eigenen Namen wählen …</option></select>
+      </div>
+      <div class="slots" id="slots"></div>
+      <div class="hint" id="hint">Tipp unten auf drei Namen: zuerst Platz 1, dann 2, dann 3. Platz 1 gibt 3 Punkte, Platz 2 gibt 2, Platz 3 gibt 1.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Live-Punkte</h2>
     <div class="list" id="list"></div>
     <p class="meta" id="totals"></p>
   </section>
 
-  <footer>Eine Stimme pro Gerät &amp; Woche · änderbar bis Sonntag 18:00 Uhr.<br>Alles aus Liebe. ❤️</footer>
+  <section id="ballotsSec" hidden>
+    <h2>Wer hat wie gevotet</h2>
+    <div class="ballots" id="ballots"></div>
+  </section>
+
+  <footer>Ein Voting pro Gerät &amp; Woche · änderbar bis zur Auswertung.<br>Alles aus Liebe. ❤️</footer>
 </div>
 
 <div class="ctabar" id="ctabar">
@@ -183,11 +222,19 @@ footer{font-size:12px;color:var(--muted);text-align:center;line-height:1.6;paddi
 <script src="config.js"></script>
 <script>
 const NAMES = ["Hodde","Dani","Benni Döz","Mikk","Benni Schwer","Bene","Ben","Philipp","Ange","Noah","Alex","Jakob","MotzgiMattis","Levin","Silas","Felix","Vince","Matti"];
+const POINTS = [3,2,1];
 const TZ = "Europe/Berlin";
+const DEFAULT_HOUR = 18;
+/* Ausnahmen: Runde (Sonntag-Datum) -> Endstunde ab Sonntag 0:00 gezählt. 24 = Mitternacht, 34 = Montag 10:00 */
+const HOUR_OVERRIDE = {"2026-11-22": 34};
 const CFG = (typeof BDW_CONFIG !== "undefined" && BDW_CONFIG) || {};
 const API = CFG.url ? CFG.url.replace(/\/$/,"") + "/rest/v1/bdw_votes" : null;
 
-/* ---- Geräte-ID (eine Stimme pro Gerät) ---- */
+function store(k, v){
+  try{ if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(_){ return null; }
+}
+
+/* ---- Geräte-ID (ein Voting pro Gerät) ---- */
 function deviceId(){
   try{
     let id = localStorage.getItem("bdw-device");
@@ -201,7 +248,7 @@ function deviceId(){
 }
 const DEV = deviceId();
 
-/* ---- Zeitlogik: Runde endet Sonntag 18:00 (Berlin) ---- */
+/* ---- Zeitlogik: Runde endet Sonntag (Berlin), Standard 18:00 ---- */
 const fmt = new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,weekday:"short"});
 function partsAt(epoch){
   const p = {};
@@ -216,50 +263,104 @@ function epochForBerlin(y,mo,d,h){
   }
   return t;
 }
+const ymd = p => `${p.y}-${String(p.mo).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
 function currentDeadline(now){
-  for (let off=0; off<8; off++){
+  for (let off=-1; off<8; off++){
     const p = partsAt(now + off*864e5);
     if (p.wd === "Sun"){
-      const dl = epochForBerlin(p.y,p.mo,p.d,18);
+      const dl = epochForBerlin(p.y,p.mo,p.d,HOUR_OVERRIDE[ymd(p)] || DEFAULT_HOUR);
       if (dl > now) return dl;
     }
   }
   return currentDeadline(now + 864e5);
 }
-function weekIdOf(deadline){
-  const p = partsAt(deadline - 36e5);
-  return `${p.y}-${String(p.mo).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
+function weekIdOf(deadline){ return ymd(partsAt(deadline - 12*36e5)); }
+let deadline, weekId, prevWeekId;
+function setRound(now){
+  deadline = currentDeadline(now);
+  weekId = weekIdOf(deadline);
+  prevWeekId = weekIdOf(deadline - 7*864e5);
 }
-let deadline = currentDeadline(Date.now());
-let weekId = weekIdOf(deadline);
-let prevWeekId = weekIdOf(deadline - 7*864e5);
+setRound(Date.now());
+
+/* ---- Stimmzettel lesen (neues Format: JSON in "name"; alt: einzelner Name) ---- */
+function parseBallot(row){
+  try{
+    const o = JSON.parse(row.name);
+    if (o && Array.isArray(o.p)) return {voter: typeof o.v === "string" ? o.v : "", picks: o.p.slice(0,3)};
+  }catch(_){}
+  return {voter: "", picks: [row.name]};
+}
 
 /* ---- UI-Grundgerüst ---- */
+const voterEl = document.getElementById("voter");
+for (const name of NAMES){
+  const o = document.createElement("option");
+  o.value = name; o.textContent = name;
+  voterEl.appendChild(o);
+}
+let voter = store("bdw-voter") || "";
+let picks = [null,null,null];
+let dirty = false;
+
+const slotsEl = document.getElementById("slots");
+const slotEls = [0,1,2].map(i=>{
+  const b = document.createElement("button");
+  b.className = "slot"; b.type = "button";
+  b.innerHTML = `<span class="medal m${i+1}">${i+1}</span><span class="sname"></span><span class="x"></span>`;
+  b.addEventListener("click", ()=>{ if (picks[i]){ picks[i] = null; dirty = true; render(); } });
+  slotsEl.appendChild(b);
+  return b;
+});
+
 const listEl = document.getElementById("list");
 const rows = {};
-let selected = null;
 for (const name of NAMES){
   const b = document.createElement("button");
-  b.className = "row"; b.disabled = true; b.id = "row-" + NAMES.indexOf(name);
-  b.innerHTML = `<span class="bar"><i></i></span><span class="pick"></span><span class="name"></span><span class="count">0</span>`;
+  b.className = "row"; b.disabled = true; b.type = "button";
+  b.innerHTML = `<span class="bar"><i></i></span><span class="place"></span><span class="name"></span><span class="count">0 Pkt</span>`;
   b.querySelector(".name").textContent = name;
-  b.addEventListener("click", ()=>{ selected = (selected === name) ? null : name; render(); });
+  b.addEventListener("click", ()=>togglePick(name));
   listEl.appendChild(b);
   rows[name] = b;
 }
+function togglePick(name){
+  const i = picks.indexOf(name);
+  if (i >= 0) picks[i] = null;
+  else {
+    const free = picks.indexOf(null);
+    if (free < 0){ flashHint("Alle 3 Plätze sind vergeben. Tipp oben auf einen Platz, um ihn freizumachen."); return; }
+    picks[free] = name;
+  }
+  dirty = true;
+  render();
+}
+voterEl.addEventListener("change", ()=>{
+  voter = voterEl.value;
+  store("bdw-voter", voter);
+  dirty = true;
+  render();
+});
+
 const statusEl = document.getElementById("status");
 function setStatus(html){ statusEl.innerHTML = html; statusEl.classList.add("show"); }
 function clearStatus(){ statusEl.classList.remove("show"); }
+const hintEl = document.getElementById("hint");
+const HINT_DEFAULT = hintEl.textContent;
+let hintTimer = null;
+function flashHint(t){
+  hintEl.textContent = t; hintEl.style.color = "var(--accent)";
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(()=>{ hintEl.textContent = HINT_DEFAULT; hintEl.style.color = ""; }, 3500);
+}
 
 /* ---- Countdown ---- */
-const cdTime = document.getElementById("cdTime");
+const cdTime = document.getElementById("cdTime"), cdLabel = document.getElementById("cdLabel");
 function tick(){
   const now = Date.now();
   if (now >= deadline){
-    deadline = currentDeadline(now);
-    weekId = weekIdOf(deadline);
-    prevWeekId = weekIdOf(deadline - 7*864e5);
-    selected = null;
+    setRound(now);
+    picks = [null,null,null]; dirty = false;
     fetchVotes();
   }
   const ms = deadline - now;
@@ -267,11 +368,14 @@ function tick(){
   cdTime.textContent = d > 0
     ? `${d} Tag${d===1?"":"e"} ${h} Std ${String(m).padStart(2,"0")} Min`
     : `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  const dp = partsAt(deadline);
+  const tag = {Sun:"So",Mon:"Mo",Tue:"Di",Wed:"Mi",Thu:"Do",Fri:"Fr",Sat:"Sa"}[dp.wd] || dp.wd;
+  cdLabel.textContent = `bis zur Auswertung · ${tag} ${String(dp.h).padStart(2,"0")}:${String(dp.mi).padStart(2,"0")} Uhr`;
 }
 tick(); setInterval(tick, 1000);
 
 /* ---- Daten (Supabase REST) ---- */
-let votes = [];          // [{device_id, week, name}]
+let votes = [];          // [{device_id, week, voter, picks}]
 let writing = false, loaded = false;
 
 function headers(extra){
@@ -284,74 +388,151 @@ function headers(extra){
 async function fetchVotes(){
   if (!API) return;
   try{
-    const r = await fetch(API + "?select=device_id,week,name&week=in.(%22" + weekId + "%22,%22" + prevWeekId + "%22)", {headers: headers()});
+    const r = await fetch(API + "?select=device_id,week,name,ts&order=ts.asc&week=in.(%22" + weekId + "%22,%22" + prevWeekId + "%22)", {headers: headers()});
     if (!r.ok) throw new Error(r.status);
-    votes = await r.json();
+    const raw = await r.json();
+    votes = raw.map(v => Object.assign({device_id: v.device_id, week: v.week}, parseBallot(v)));
     loaded = true;
     const mine = myVote();
-    if (!mine) setStatus("Noch nicht abgestimmt. <b>Tipp auf einen Namen</b> und drück unten auf „Vote abgeben“.");
+    if (mine && !dirty){
+      picks = [0,1,2].map(i => mine.picks[i] || null);
+      if (mine.voter){ voter = mine.voter; store("bdw-voter", voter); }
+    }
+    if (!mine) setStatus("Noch nicht abgestimmt. <b>Wähl deinen Namen</b>, tipp drei Namen für Platz 1–3 an und drück unten auf „Vote abgeben“.");
     else clearStatus();
   }catch(e){
     if (!loaded) setStatus("Stimmen können gerade nicht geladen werden — Verbindung prüfen.");
   }
   render();
 }
-function countsFor(wk){
-  const c = {}; let total = 0;
-  for (const name of NAMES) c[name] = 0;
+function scoresFor(wk){
+  const pts = {}, firsts = {}; let ballots = 0;
+  for (const name of NAMES){ pts[name] = 0; firsts[name] = 0; }
   for (const v of votes){
-    if (v.week === wk && c[v.name] !== undefined){ c[v.name]++; total++; }
+    if (v.week !== wk) continue;
+    ballots++;
+    v.picks.forEach((n,i)=>{
+      if (pts[n] === undefined) return;
+      pts[n] += POINTS[i];
+      if (i === 0) firsts[n]++;
+    });
   }
-  return {c, total};
+  const ranking = NAMES.map(n=>({n, pts:pts[n], firsts:firsts[n]}))
+    .filter(x=>x.pts>0)
+    .sort((a,b)=> b.pts - a.pts || b.firsts - a.firsts);
+  return {pts, ballots, ranking};
 }
 function myVote(){
   if (!DEV) return null;
   return votes.find(v => v.week === weekId && v.device_id === DEV) || null;
 }
+function takenVoters(){
+  const s = new Set();
+  for (const v of votes) if (v.week === weekId && v.device_id !== DEV && v.voter) s.add(v.voter);
+  return s;
+}
 
 /* ---- Rendering ---- */
 const ctabar = document.getElementById("ctabar"), cta = document.getElementById("cta");
+const pkt = n => n + " Pkt";
 function render(){
-  const {c, total} = countsFor(weekId);
-  const max = Math.max(1, ...Object.values(c));
+  const {pts, ballots} = scoresFor(weekId);
+  const max = Math.max(1, ...Object.values(pts));
   const mine = myVote();
   const canVote = !!API && !!DEV && loaded && !writing;
+
+  /* Wer-bist-du-Auswahl: Namen, die schon von einem anderen Gerät gevotet haben, sperren */
+  const taken = takenVoters();
+  for (const o of voterEl.options){
+    if (!o.value) continue;
+    o.disabled = taken.has(o.value);
+    o.textContent = o.value + (taken.has(o.value) ? " (hat schon gevotet)" : "");
+  }
+  if (voter && taken.has(voter)){ voter = ""; }
+  voterEl.value = voter;
+  voterEl.disabled = !canVote;
+
+  /* Plätze */
+  const nextFree = picks.indexOf(null);
+  slotEls.forEach((el,i)=>{
+    el.classList.toggle("filled", !!picks[i]);
+    el.classList.toggle("next", i === nextFree && canVote);
+    el.querySelector(".sname").textContent = picks[i] || `Platz ${i+1} · ${POINTS[i]} Pkt`;
+    el.querySelector(".x").textContent = picks[i] ? "✕" : "";
+    el.disabled = !canVote;
+  });
+
+  /* Namensliste */
   for (const name of NAMES){
     const r = rows[name];
-    r.querySelector(".count").textContent = c[name];
-    r.querySelector(".bar i").style.width = total ? (c[name]/max*100) + "%" : "0";
-    r.classList.toggle("mine", !!mine && mine.name === name);
-    r.classList.toggle("sel", selected === name);
+    const place = picks.indexOf(name);
+    const badge = r.querySelector(".place");
+    badge.className = "place" + (place >= 0 ? " m" + (place+1) : "");
+    badge.textContent = place >= 0 ? place + 1 : "";
+    r.classList.toggle("sel", place >= 0);
+    r.querySelector(".count").textContent = pkt(pts[name]);
+    r.querySelector(".bar i").style.width = (pts[name]/max*100) + "%";
     r.disabled = !canVote;
   }
   document.getElementById("totals").textContent =
-    total === 1 ? "1 Stimme abgegeben" : total + " Stimmen abgegeben";
+    ballots === 1 ? "1 Voting abgegeben" : ballots + " Votings abgegeben";
 
-  const showCta = canVote && selected && (!mine || mine.name !== selected);
+  /* Button */
+  const complete = !!voter && picks.every(Boolean);
+  const changed = !mine || mine.voter !== voter || picks.some((p,i)=>p !== mine.picks[i]);
+  const showCta = canVote && dirty && picks.some(Boolean);
   ctabar.classList.toggle("show", !!showCta);
-  cta.disabled = !showCta || writing;
-  cta.textContent = writing ? "Wird gespeichert …" : (mine ? "Vote ändern → " + (selected||"") : "Vote abgeben");
+  cta.disabled = !complete || !changed || writing;
+  cta.textContent = writing ? "Wird gespeichert …"
+    : !voter ? "Erst oben deinen Namen wählen"
+    : !picks.every(Boolean) ? `Noch ${picks.filter(p=>!p).length} Platz${picks.filter(p=>!p).length===1?"":"e"} frei`
+    : mine ? "Vote ändern" : "Vote abgeben";
+
+  renderBallots();
   renderChampion();
 }
+function renderBallots(){
+  const list = votes.filter(v => v.week === weekId);
+  const sec = document.getElementById("ballotsSec");
+  const box = document.getElementById("ballots");
+  box.innerHTML = "";
+  if (!list.length){ sec.hidden = true; return; }
+  for (const v of list){
+    const div = document.createElement("div");
+    div.className = "bl card";
+    const who = document.createElement("div");
+    who.className = "who" + (v.device_id === DEV ? " you" : "");
+    who.textContent = v.voter || "Unbekannt (alter Vote)";
+    const pk = document.createElement("div");
+    pk.className = "picks";
+    v.picks.forEach((n,i)=>{
+      if (i) pk.appendChild(document.createTextNode(" · "));
+      pk.appendChild(document.createTextNode((i+1) + ". "));
+      const b = document.createElement("b"); b.textContent = n; pk.appendChild(b);
+    });
+    div.append(who, pk);
+    box.appendChild(div);
+  }
+  sec.hidden = false;
+}
 function renderChampion(){
-  const {c, total} = countsFor(prevWeekId);
+  const {ranking} = scoresFor(prevWeekId);
   const champSec = document.getElementById("champSec");
   const lastSec = document.getElementById("lastRound");
-  if (!total){ champSec.hidden = true; lastSec.hidden = true; return; }
-  const top = NAMES.map(n=>({n, v:c[n]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);
+  if (!ranking.length){ champSec.hidden = true; lastSec.hidden = true; return; }
+  const top = ranking.slice(0,3);
   document.getElementById("champName").textContent = top[0].n;
   document.getElementById("champVotes").textContent =
-    (top[0].v === 1 ? "1 Stimme" : top[0].v + " Stimmen") + " · gekürt am " + prevWeekId.split("-").reverse().slice(0,2).join(".") + ".";
+    pkt(top[0].pts) + " · gekürt am " + prevWeekId.split("-").reverse().slice(0,2).join(".") + ".";
   champSec.hidden = false;
   const pod = document.getElementById("podium");
   pod.innerHTML = "";
-  const labels = ["p1","p2","p3"];
   top.forEach((x,i)=>{
     const div = document.createElement("div");
-    div.className = "pod " + labels[i];
-    div.innerHTML = `<span class="medal">${i+1}</span><span class="pname"></span><span class="pvotes"></span>`;
+    div.className = "pod card";
+    div.innerHTML = `<span class="medal m${i+1}">${i+1}</span><span class="pname"></span><span class="pvotes"></span>`;
     div.querySelector(".pname").textContent = x.n;
-    div.querySelector(".pvotes").textContent = x.v === 1 ? "1 Stimme" : x.v + " Stimmen";
+    div.querySelector(".pvotes").textContent = pkt(x.pts);
     pod.appendChild(div);
   });
   lastSec.hidden = false;
@@ -359,19 +540,21 @@ function renderChampion(){
 
 /* ---- Vote abgeben ---- */
 cta.addEventListener("click", async ()=>{
-  if (!API || !DEV || !selected || writing) return;
+  if (!API || !DEV || writing || !voter || !picks.every(Boolean)) return;
   writing = true; render();
+  const payload = JSON.stringify({v: voter, p: picks.slice()});
   try{
     const r = await fetch(API + "?on_conflict=device_id,week", {
       method: "POST",
       headers: headers({"Prefer": "resolution=merge-duplicates,return=minimal"}),
-      body: JSON.stringify({device_id: DEV, week: weekId, name: selected, ts: new Date().toISOString()})
+      body: JSON.stringify({device_id: DEV, week: weekId, name: payload, ts: new Date().toISOString()})
     });
     if (!r.ok) throw new Error(r.status);
     votes = votes.filter(v => !(v.week === weekId && v.device_id === DEV));
-    votes.push({device_id: DEV, week: weekId, name: selected});
-    selected = null;
+    votes.push({device_id: DEV, week: weekId, voter, picks: picks.slice()});
+    dirty = false;
     clearStatus();
+    flashHint("Gespeichert! Du kannst bis zur Auswertung noch umentscheiden.");
   }catch(e){
     setStatus("Speichern hat nicht geklappt. Versuch's gleich nochmal.");
   }
@@ -380,6 +563,7 @@ cta.addEventListener("click", async ()=>{
 });
 
 /* ---- Start ---- */
+render();
 if (!API){
   setStatus("Die Abstimmung ist gerade im Aufbau — Datenbank fehlt noch. Schau später nochmal rein.");
 } else if (!DEV){
@@ -387,7 +571,7 @@ if (!API){
 } else {
   setStatus("Lade Stimmen&nbsp;…");
   fetchVotes();
-  setInterval(fetchVotes, 12000);
+  setInterval(()=>{ if (!writing) fetchVotes(); }, 12000);
   document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) fetchVotes(); });
 }
 </script>
